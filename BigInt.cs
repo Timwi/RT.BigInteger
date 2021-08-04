@@ -534,5 +534,111 @@ namespace RT.BigInteger
         public static BigInt operator ++(BigInt operand) => add(operand, 1, subtract: false);
         /// <summary>Decrement operator.</summary>
         public static BigInt operator --(BigInt operand) => add(operand, 1, subtract: true);
+
+        /// <summary>Bitwise or operator.</summary>
+        public static BigInt operator |(BigInt one, BigInt two)
+        {
+            if (one._value == null)
+            {
+                if (two._value == null)
+                    return new BigInt(null, one._sign | two._sign);
+                if (one._sign < 0)
+                    return new BigInt(null, one._sign | unchecked((int) two._value[0]));
+                var nv = (uint[]) two._value.Clone();
+                nv[0] |= unchecked((uint) one._sign);
+                return new BigInt(nv, two._sign | (one._sign >> 31));
+            }
+            else if (two._value == null)
+            {
+                if (two._sign < 0)
+                    return new BigInt(null, two._sign | unchecked((int) one._value[0]));
+                var nv = (uint[]) one._value.Clone();
+                nv[0] |= unchecked((uint) two._sign);
+                return new BigInt(nv, one._sign | (two._sign >> 31));
+            }
+            else if (one._value.Length > two._value.Length ? two._sign >= 0 : one._sign < 0)
+            {
+                var nv = (uint[]) one._value.Clone();
+                for (var i = two._value.Length - 1; i >= 0; i--)
+                    nv[i] |= two._value[i];
+                return new BigInt(nv, one._sign | two._sign);
+            }
+            else
+            {
+                var nv = (uint[]) two._value.Clone();
+                for (var i = one._value.Length - 1; i >= 0; i--)
+                    nv[i] |= one._value[i];
+                return new BigInt(nv, two._sign | one._sign);
+            }
+        }
+
+        /// <summary>Bitwise and operator.</summary>
+        public static BigInt operator &(BigInt one, BigInt two)
+        {
+            if (one._value == null)
+            {
+                if (two._value == null)
+                    return new BigInt(null, one._sign & two._sign);
+                if (one._sign >= 0)
+                    return new BigInt(null, one._sign & unchecked((int) two._value[0]));
+                var nv = (uint[]) two._value.Clone();
+                nv[0] &= unchecked((uint) one._sign);
+                return new BigInt(nv, two._sign & (one._sign >> 31));
+            }
+            else if (two._value == null)
+            {
+                if (two._sign >= 0)
+                    return new BigInt(null, two._sign & unchecked((int) one._value[0]));
+                var nv = (uint[]) one._value.Clone();
+                nv[0] &= unchecked((uint) two._sign);
+                return new BigInt(nv, one._sign & (two._sign >> 31));
+            }
+            else if (one._value.Length > two._value.Length ? two._sign < 0 : one._sign >= 0)
+            {
+                var nv = (uint[]) one._value.Clone();
+                for (var i = two._value.Length - 1; i >= 0; i--)
+                    nv[i] &= two._value[i];
+                return new BigInt(nv, one._sign & two._sign);
+            }
+            else
+            {
+                var nv = (uint[]) two._value.Clone();
+                for (var i = one._value.Length - 1; i >= 0; i--)
+                    nv[i] &= one._value[i];
+                return new BigInt(nv, two._sign & one._sign);
+            }
+        }
+
+        /// <summary>Bitwise xor operator.</summary>
+        public static BigInt operator ^(BigInt one, BigInt two)
+        {
+            if (one._value == null && two._value == null)
+                return new BigInt(null, one._sign ^ two._sign);
+
+            var len = Math.Max(one._value == null ? 1 : one._value.Length, two._value == null ? 1 : two._value.Length);
+            var sign = (one._sign >> 31) ^ (two._sign >> 31);
+            uint[] nv = null;
+            uint v;
+            for (var i = len - 1; i >= 1; i--)
+            {
+                v = (one._value == null || i >= one._value.Length ? unchecked((uint) (one._sign >> 31)) : one._value[i])
+                  ^ (two._value == null || i >= two._value.Length ? unchecked((uint) (two._sign >> 31)) : two._value[i]);
+                if (v != sign)
+                {
+                    if (nv == null)
+                        nv = new uint[i + 1];
+                    nv[i] = v;
+                }
+            }
+            v = (one._value == null ? unchecked((uint) one._sign) : one._value[0]) ^ (two._value == null ? unchecked((uint) two._sign) : two._value[0]);
+            if (nv == null)
+            {
+                if ((v >> 31) == sign)
+                    return new BigInt(null, unchecked((int) v));
+                nv = new uint[1];
+            }
+            nv[0] = v;
+            return new BigInt(nv, sign);
+        }
     }
 }
