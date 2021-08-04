@@ -5,7 +5,7 @@ using System.Text;
 namespace RT.BigInteger
 {
     /// <summary>Encapsulates an arbitrary-size integer.</summary>
-    public struct BigInt
+    public struct BigInt : IComparable<BigInt>, IEquatable<BigInt>
     {
         // If the number fits into a single Int32, this is null
         private readonly uint[] _value;
@@ -67,9 +67,6 @@ namespace RT.BigInteger
         }
 
         /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit signed integer.</summary>
-        public static implicit operator BigInt(int value) => new BigInt(null, value);
-
-        /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit signed integer.</summary>
         public BigInt(int value) : this(null, value) { }
 
         /// <summary>Constructs a <see cref="BigInt"/> from a 64-bit unsigned integer.</summary>
@@ -87,8 +84,40 @@ namespace RT.BigInteger
             }
         }
 
+        /// <summary>Constructs a <see cref="BigInt"/> from a 64-bit signed integer.</summary>
+        public BigInt(long value)
+        {
+            if (value <= int.MaxValue && value >= int.MinValue)
+            {
+                _value = null;
+                _sign = (int) value;
+            }
+            else
+            {
+                _value = new uint[] { unchecked((uint) value), unchecked((uint) (value >> 32)) };
+                _sign = unchecked((int) value >> 63);
+            }
+        }
+
+        /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit signed integer.</summary>
+        public static implicit operator BigInt(int value) => new BigInt(null, value);
+        /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit unsigned integer.</summary>
+        public static implicit operator BigInt(uint value) => new BigInt(value);
+        /// <summary>Constructs a <see cref="BigInt"/> from a 64-bit signed integer.</summary>
+        public static implicit operator BigInt(long value) => new BigInt(value);
+        /// <summary>Constructs a <see cref="BigInt"/> from a 64-bit unsigned integer.</summary>
+        public static implicit operator BigInt(ulong value) => new BigInt(value);
+        /// <summary>Constructs a <see cref="BigInt"/> from an 8-bit signed integer.</summary>
+        public static implicit operator BigInt(sbyte value) => new BigInt(null, value);
+        /// <summary>Constructs a <see cref="BigInt"/> from an 8-bit unsigned integer.</summary>
+        public static implicit operator BigInt(byte value) => new BigInt(value);
+        /// <summary>Constructs a <see cref="BigInt"/> from a 16-bit signed integer.</summary>
+        public static implicit operator BigInt(ushort value) => new BigInt(value);
+        /// <summary>Constructs a <see cref="BigInt"/> from a 16-bit unsigned integer.</summary>
+        public static implicit operator BigInt(short value) => new BigInt(value);
+
         /// <summary>Determines whether the integer is 0.</summary>
-        public bool IsZero { get { return _value == null && _sign == 0; } }
+        public bool IsZero => _value == null && _sign == 0;
 
         /// <summary>Returns the negative value.</summary>
         public BigInt Negative
@@ -109,7 +138,7 @@ namespace RT.BigInteger
                     return new BigInt(null, ~neg._sign);
                 for (var i = 0; i < neg._value.Length; i++)
                     neg._value[i] = ~neg._value[i];
-                neg._sign = -neg._sign;
+                neg._sign = ~neg._sign;
                 return neg;
             }
         }
@@ -126,10 +155,10 @@ namespace RT.BigInteger
             {
                 if (_value == null)
                     return new BigInt(null, ~_sign);
-                var b = new BigInt((uint[]) _value.Clone(), ~_sign);
-                for (var i = 0; i < b._value.Length; i++)
-                    b._value[i] = ~b._value[i];
-                return b;
+                var val = (uint[]) _value.Clone();
+                for (var i = 0; i < val.Length; i++)
+                    val[i] = ~val[i];
+                return new BigInt(val, ~_sign);
             }
         }
         /// <summary>Returns the bitwise inverse (bitwise NOT).</summary>
@@ -268,6 +297,8 @@ namespace RT.BigInteger
                 return new BigInt(new[] { unchecked((uint) sumI), unchecked((uint) ((ulong) sumL >> 32)) }, unchecked((int) (sumL >> 63)));
             }
 
+            uint subtractor = subtract ? 0xffffffffu : 0u;
+            var th = (two._sign < 0) ^ subtract ? 0xffffffffu : 0u;
             var l1 = one._value == null ? 1 : one._value.Length;
             var l2 = two._value == null ? 1 : two._value.Length;
             var len = Math.Max(l1, l2);
@@ -281,7 +312,7 @@ namespace RT.BigInteger
             var nv = new uint[len];
             var sum =
                 (ulong) (one._value == null ? unchecked((uint) one._sign) : one._value[0]) +
-                (ulong) (two._value == null ? unchecked((uint) (subtract ? ~two._sign : two._sign)) : (subtract ? ~two._value[0] : two._value[0])) +
+                (ulong) ((two._value == null ? unchecked((uint) two._sign) : two._value[0]) ^ subtractor) +
                 (subtract ? 1ul : 0ul);
             nv[0] = unchecked((uint) sum);
             var carry = unchecked((uint) (sum >> 32));
@@ -289,7 +320,7 @@ namespace RT.BigInteger
             {
                 sum =
                     (ulong) (one._value == null ? 0u : i >= one._value.Length ? unchecked((uint) one._sign) : one._value[i]) +
-                    (ulong) (two._value == null ? (subtract ? 0xfffffffful : 0ul) : i >= two._value.Length ? unchecked((uint) (subtract ? ~two._sign : two._sign)) : (subtract ? ~two._value[i] : two._value[i])) +
+                    (ulong) (two._value == null ? th : (i >= two._value.Length ? unchecked((uint) two._sign) : two._value[i]) ^ subtractor) +
                     (ulong) carry;
                 nv[i] = unchecked((uint) sum);
                 carry = unchecked((uint) (sum >> 32));
@@ -330,7 +361,7 @@ namespace RT.BigInteger
                 var carry = unchecked((uint) (mL >> 32));
                 for (var j = i + 1; j < nv.Length; j++)
                 {
-                    mL = vL * unchecked(two._value == null ? unchecked((uint) (two._sign >> 31)) : two._value[j - i]) + carry + nv[j];
+                    mL = vL * unchecked(two._value == null || j - i >= two._value.Length ? unchecked((uint) (two._sign >> 31)) : two._value[j - i]) + carry + nv[j];
                     nv[j] = unchecked((uint) mL);
                     carry = unchecked((uint) (mL >> 32));
                 }
@@ -434,9 +465,24 @@ namespace RT.BigInteger
         /// <summary>Returns the remainder obtained when dividing <paramref name="one"/> by <paramref name="two"/>.</summary>
         public static BigInt operator %(BigInt one, BigInt two) => divideModulo(one, two).Remainder;
 
+        /// <summary>Less-than comparison operator.</summary>
+        public static bool operator <(BigInt one, BigInt two) => one.CompareTo(two) < 0;
+        /// <summary>Greater-than comparison operator.</summary>
+        public static bool operator >(BigInt one, BigInt two) => one.CompareTo(two) > 0;
+        /// <summary>Less-than-or-equal-to comparison operator.</summary>
+        public static bool operator <=(BigInt one, BigInt two) => one.CompareTo(two) <= 0;
+        /// <summary>Greater-than-or-equal-to comparison operator.</summary>
+        public static bool operator >=(BigInt one, BigInt two) => one.CompareTo(two) >= 0;
+        /// <summary>Equality comparison operator.</summary>
+        public static bool operator ==(BigInt one, BigInt two) => one.CompareTo(two) == 0;
+        /// <summary>Inequality comparison operator.</summary>
+        public static bool operator !=(BigInt one, BigInt two) => one.CompareTo(two) != 0;
+
         /// <summary>Override; see base.</summary>
         public override string ToString()
         {
+            if (IsZero)
+                return "0";
             var sb = new StringBuilder();
             var val = _sign < 0 ? -this : this;
             while (!val.IsZero)
@@ -454,5 +500,39 @@ namespace RT.BigInteger
                 sb.Insert(0, "-");
             return sb.ToString();
         }
+
+        /// <summary>Compares this integer to <paramref name="other"/>.</summary>
+        public int CompareTo(BigInt other)
+        {
+            if (_sign != other._sign)
+                return _sign < other._sign ? -1 : 1;
+            if (_value == null && other._value == null)
+                return _sign.CompareTo(other._sign);
+
+            for (var i = Math.Max(_value == null ? 0 : _value.Length - 1, other._value == null ? 0 : other._value.Length - 1); i >= 1; i--)
+            {
+                var v1 = _value == null || i >= _value.Length ? 0u : _value[i];
+                var v2 = other._value == null || i >= other._value.Length ? 0u : other._value[i];
+                if (v1 != v2)
+                    return v1 < v2 ? -1 : 1;
+            }
+            var vv1 = _value == null ? unchecked((uint) _sign) : _value[0];
+            var vv2 = other._value == null ? unchecked((uint) other._sign) : other._value[0];
+            return vv1.CompareTo(vv2);
+        }
+
+        /// <summary>Equality comparison.</summary>
+        public bool Equals(BigInt other) => CompareTo(other) == 0;
+
+        /// <summary>Equality comparison.</summary>
+        public override bool Equals(object obj) => obj is BigInt bi && CompareTo(bi) == 0;
+
+        /// <summary>Hash code function.</summary>
+        public override int GetHashCode() => _value == null ? _sign : unchecked((int) _value[0]);
+
+        /// <summary>Increment operator.</summary>
+        public static BigInt operator ++(BigInt operand) => add(operand, 1, subtract: false);
+        /// <summary>Decrement operator.</summary>
+        public static BigInt operator --(BigInt operand) => add(operand, 1, subtract: true);
     }
 }
