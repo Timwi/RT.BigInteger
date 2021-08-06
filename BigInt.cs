@@ -352,10 +352,11 @@ namespace RT.BigInteger
             }
 
             var nv = new uint[(one.MostSignificantBit + two.MostSignificantBit + 33) / 32];
-            var len = one._value == null ? 1 : one._value.Length;
-            for (var i = 0; i < len; i++)
+            for (var i = 0; i < nv.Length; i++)
             {
-                var vL = unchecked(one._value == null ? (ulong) (uint) one._sign : one._value[i]);
+                var vL = i == 0
+                    ? one._value == null ? (uint) one._sign : one._value[0]
+                    : (ulong) (one._value == null || i >= one._value.Length ? (uint) (one._sign >> 31) : one._value[i]);
                 var mL = vL * unchecked(two._value == null ? unchecked((uint) two._sign) : two._value[0]) + nv[i];
                 nv[i] = unchecked((uint) mL);
                 var carry = unchecked((uint) (mL >> 32));
