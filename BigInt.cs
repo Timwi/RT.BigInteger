@@ -306,21 +306,28 @@ namespace RT.BigInteger
                 if (operand._value == null)
                     nv[amount32] = unchecked((uint) operand._sign);
                 else
-                    for (int i = Math.Min(operand._value.Length - 1, nv.Length - amount32 - 1); i >= 0; i--)
-                        nv[i + amount32] = operand._value[i];
+                    for (int j = Math.Min(operand._value.Length - 1, nv.Length - amount32 - 1); j >= 0; j--)
+                        nv[j + amount32] = operand._value[j];
                 return new BigInt(nv, operand._sign >> 31);
             }
 
+            uint last;
             if (operand._value == null)
             {
                 nv[amount32] = unchecked((uint) operand._sign << amountRest);
-                nv[amount32 + 1] = unchecked((uint) operand._sign >> (32 - amountRest));
-                return new BigInt(nv, operand._sign);
+                last = unchecked((uint) operand._sign >> (32 - amountRest));
+                if (last != 0)
+                    nv[amount32 + 1] = last;
+                return new BigInt(nv, operand._sign >> 31);
             }
 
             nv[amount32] = operand._value[0] << amountRest;
-            for (var i = 1; i < operand._value.Length; i++)
+            var i = 1;
+            for (; i < operand._value.Length; i++)
                 nv[i + amount32] = (operand._value[i] << amountRest) | (operand._value[i - 1] >> (32 - amountRest));
+            last = operand._value[i - 1] >> (32 - amountRest);
+            if (last != 0)
+                nv[i + amount32] = last;
             return new BigInt(nv, operand._sign);
         }
 
