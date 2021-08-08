@@ -578,13 +578,14 @@ namespace RT.BigInteger
         /// <summary>Bitwise or operator.</summary>
         public static BigInt operator |(BigInt one, BigInt two)
         {
+            uint[] nv, oth;
             if (one._value == null)
             {
                 if (two._value == null)
                     return new BigInt(null, one._sign | two._sign);
                 if (one._sign < 0)
                     return new BigInt(null, one._sign | unchecked((int) two._value[0]));
-                var nv = (uint[]) two._value.Clone();
+                nv = (uint[]) two._value.Clone();
                 nv[0] |= unchecked((uint) one._sign);
                 return new BigInt(nv, two._sign | (one._sign >> 31));
             }
@@ -592,36 +593,48 @@ namespace RT.BigInteger
             {
                 if (two._sign < 0)
                     return new BigInt(null, two._sign | unchecked((int) one._value[0]));
-                var nv = (uint[]) one._value.Clone();
+                nv = (uint[]) one._value.Clone();
                 nv[0] |= unchecked((uint) two._sign);
                 return new BigInt(nv, one._sign | (two._sign >> 31));
             }
-            else if (one._value.Length > two._value.Length)
+
+            BigInt longer, shorter;
+            if (one._value.Length > two._value.Length)
             {
-                var nv = (uint[]) (two._sign < 0 ? two : one)._value.Clone();
-                for (var i = two._value.Length - 1; i >= 0; i--)
-                    nv[i] |= two._value[i];
-                return new BigInt(nv, one._sign | two._sign);
+                longer = one;
+                shorter = two;
             }
             else
             {
-                var nv = (uint[]) (one._sign < 0 ? one : two)._value.Clone();
-                for (var i = one._value.Length - 1; i >= 0; i--)
-                    nv[i] |= one._value[i];
-                return new BigInt(nv, two._sign | one._sign);
+                longer = two;
+                shorter = one;
             }
+            if (shorter._sign < 0)
+            {
+                nv = (uint[]) shorter._value.Clone();
+                oth = longer._value;
+            }
+            else
+            {
+                nv = (uint[]) longer._value.Clone();
+                oth = shorter._value;
+            }
+            for (var i = shorter._value.Length - 1; i >= 0; i--)
+                nv[i] |= oth[i];
+            return new BigInt(nv, shorter._sign | longer._sign);
         }
 
         /// <summary>Bitwise and operator.</summary>
         public static BigInt operator &(BigInt one, BigInt two)
         {
+            uint[] nv, oth;
             if (one._value == null)
             {
                 if (two._value == null)
                     return new BigInt(null, one._sign & two._sign);
                 if (one._sign >= 0)
                     return new BigInt(null, one._sign & unchecked((int) two._value[0]));
-                var nv = (uint[]) two._value.Clone();
+                nv = (uint[]) two._value.Clone();
                 nv[0] &= unchecked((uint) one._sign);
                 return new BigInt(nv, two._sign & (one._sign >> 31));
             }
@@ -629,24 +642,35 @@ namespace RT.BigInteger
             {
                 if (two._sign >= 0)
                     return new BigInt(null, two._sign & unchecked((int) one._value[0]));
-                var nv = (uint[]) one._value.Clone();
+                nv = (uint[]) one._value.Clone();
                 nv[0] &= unchecked((uint) two._sign);
                 return new BigInt(nv, one._sign & (two._sign >> 31));
             }
-            else if (one._value.Length > two._value.Length)
+
+            BigInt longer, shorter;
+            if (one._value.Length > two._value.Length)
             {
-                var nv = (uint[]) (two._sign < 0 ? one : two)._value.Clone();
-                for (var i = two._value.Length - 1; i >= 0; i--)
-                    nv[i] &= two._value[i];
-                return new BigInt(nv, one._sign & two._sign);
+                longer = one;
+                shorter = two;
             }
             else
             {
-                var nv = (uint[]) (one._sign < 0 ? two : one)._value.Clone();
-                for (var i = one._value.Length - 1; i >= 0; i--)
-                    nv[i] &= one._value[i];
-                return new BigInt(nv, two._sign & one._sign);
+                longer = two;
+                shorter = one;
             }
+            if (shorter._sign < 0)
+            {
+                nv = (uint[]) longer._value.Clone();
+                oth = shorter._value;
+            }
+            else
+            {
+                nv = (uint[]) shorter._value.Clone();
+                oth = longer._value;
+            }
+            for (var i = shorter._value.Length - 1; i >= 0; i--)
+                nv[i] &= oth[i];
+            return new BigInt(nv, shorter._sign & longer._sign);
         }
 
         /// <summary>Bitwise xor operator.</summary>
