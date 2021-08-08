@@ -86,7 +86,7 @@ namespace RT.BigInteger
                 return false;
             var neg = str[0] == '-';
             var ix = neg ? 1 : 0;
-            while (str.Length - ix > 9)
+            while (str.Length - ix >= 9)
             {
                 if (!int.TryParse(str.Substring(ix, 9), out var intVal))
                     return false;   // this should never happen
