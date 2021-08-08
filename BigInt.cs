@@ -131,7 +131,7 @@ namespace RT.BigInteger
             else
             {
                 _value = new uint[] { unchecked((uint) value), unchecked((uint) (value >> 32)) };
-                _sign = unchecked((int) value >> 63);
+                _sign = unchecked((int) (value >> 63));
             }
         }
 
