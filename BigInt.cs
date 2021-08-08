@@ -247,6 +247,8 @@ namespace RT.BigInteger
         /// <summary>
         ///     Returns the result of a bit-shift-right by the specified <paramref name="amount"/>. This is equivalent to
         ///     dividing by 2 to the power of <paramref name="amount"/> and rounding down.</summary>
+        /// <remarks>
+        ///     If <paramref name="amount"/> is negative, the number is shifted left instead.</remarks>
         public static BigInt operator >>(BigInt operand, int amount)
         {
             if (amount == 0)
@@ -279,6 +281,8 @@ namespace RT.BigInteger
         /// <summary>
         ///     Returns the result of a bit-shift-left by the specified <paramref name="amount"/>. This is equivalent to
         ///     multiply by 2 to the power of <paramref name="amount"/>.</summary>
+        /// <remarks>
+        ///     If <paramref name="amount"/> is negative, the number is shifted right instead.</remarks>
         public static BigInt operator <<(BigInt operand, int amount)
         {
             if (amount == 0 || (operand._value == null && (operand._sign == 0 || operand._sign == -1)))
@@ -293,35 +297,30 @@ namespace RT.BigInteger
                     return new BigInt(null, shI);
             }
 
+            var hb = operand.MostSignificantBit + amount;
+            var nv = new uint[(hb >> 5) + 1];
             var amount32 = amount >> 5;
             var amountRest = amount & 0x1f;
-            if (operand._value == null)
+            if (amountRest == 0)
             {
-                var nnewLen = 1 + amount32;
-                var nextra = (ulong) unchecked((uint) operand._sign) << amountRest != unchecked((uint) operand._sign) << amountRest;
-                if (nextra)
-                    nnewLen++;
-
-                var nnv = new uint[nnewLen];
-                nnv[amount32] = ((uint) operand._sign) << amountRest;
-                if (nextra)
-                    nnv[amount32 + 1] = (uint) (operand._sign >> (32 - amountRest));
-                return new BigInt(nnv, operand._sign < 0 ? -1 : 0);
+                if (operand._value == null)
+                    nv[amount32] = unchecked((uint) operand._sign);
+                else
+                    for (int i = Math.Min(operand._value.Length - 1, nv.Length - amount32 - 1); i >= 0; i--)
+                        nv[i + amount32] = operand._value[i];
+                return new BigInt(nv, operand._sign >> 31);
             }
 
-            // Opportunity to optimize the size of the array
-            var ix = operand._value.Length;
-            while (ix > 0 && operand._value[ix - 1] == unchecked((uint) operand._sign))
-                ix--;
+            if (operand._value == null)
+            {
+                nv[amount32] = unchecked((uint) operand._sign << amountRest);
+                nv[amount32 + 1] = unchecked((uint) operand._sign >> (32 - amountRest));
+                return new BigInt(nv, operand._sign);
+            }
 
-            var newLen = ix + amount32;
-            var extra = (ulong) operand._value[ix - 1] << amountRest != operand._value[ix - 1] << amountRest;
-            var nv = new uint[extra ? newLen + 1 : newLen];
             nv[amount32] = operand._value[0] << amountRest;
-            for (var i = amount32 + 1; i < newLen; i++)
-                nv[i] = (operand._value[i - amount32] << amountRest) | (operand._value[i - amount32 - 1] >> (32 - amountRest));
-            if (extra)
-                nv[newLen] = operand._value[ix - 1] >> (32 - amountRest);
+            for (var i = 1; i < operand._value.Length; i++)
+                nv[i + amount32] = (operand._value[i] << amountRest) | (operand._value[i - 1] >> (32 - amountRest));
             return new BigInt(nv, operand._sign);
         }
 
@@ -704,5 +703,8 @@ namespace RT.BigInteger
             nv[0] = v;
             return new BigInt(nv, sign);
         }
+
+        /// <summary>Returns the operand.</summary>
+        public static BigInt operator +(BigInt operand) => operand;
     }
 }
