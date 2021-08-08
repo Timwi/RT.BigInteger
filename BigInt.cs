@@ -66,6 +66,42 @@ namespace RT.BigInteger
             _sign = sign;
         }
 
+        /// <summary>
+        ///     Parses a numerical string (consisting only of digits <c>0</c> to <c>9</c>, optionally prepended with a
+        ///     <c>-</c>) into a <see cref="BigInt"/>.</summary>
+        public static BigInt Parse(string str)
+        {
+            if (!TryParse(str, out BigInt result))
+                throw new ArgumentException("Only digits 0–9, optionally prepended with a '-', are allowed in BigInt.Parse().", nameof(str));
+            return result;
+        }
+
+        /// <summary>
+        ///     Parses a numerical string (consisting only of digits <c>0</c> to <c>9</c>, optionally prepended with a
+        ///     <c>-</c>) into a <see cref="BigInt"/>.</summary>
+        public static bool TryParse(string str, out BigInt value)
+        {
+            value = new BigInt(0);
+            if (((str[0] < '0' || str[0] > '9') && str[0] != '-') || str.Skip(1).Any(ch => ch < '0' || ch > '9'))
+                return false;
+            var neg = str[0] == '-';
+            var ix = neg ? 1 : 0;
+            while (str.Length - ix > 9)
+            {
+                if (!int.TryParse(str.Substring(ix, 9), out var intVal))
+                    return false;   // this should never happen
+                value = (value * 1000000000) + intVal;
+                ix += 9;
+            }
+            if (str.Length == ix)
+                return true;
+            value = (value * _powersOfTen[str.Length - ix]) + int.Parse(str.Substring(ix));
+            if (neg)
+                value = -value;
+            return true;
+        }
+        private static readonly int[] _powersOfTen = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
+
         /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit signed integer.</summary>
         public BigInt(int value) : this(null, value) { }
 
@@ -204,6 +240,9 @@ namespace RT.BigInteger
                 return bitIx + 32 * ix;
             }
         }
+
+        /// <summary>Returns the sign of the number: −1 for negative numbers, 0 for zero, and 1 for positive numbers.</summary>
+        public int Sign => _sign < 0 ? -1 : IsZero ? 0 : 1;
 
         /// <summary>
         ///     Returns the result of a bit-shift-right by the specified <paramref name="amount"/>. This is equivalent to
