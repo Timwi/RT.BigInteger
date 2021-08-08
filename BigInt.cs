@@ -596,16 +596,16 @@ namespace RT.BigInteger
                 nv[0] |= unchecked((uint) two._sign);
                 return new BigInt(nv, one._sign | (two._sign >> 31));
             }
-            else if (one._value.Length > two._value.Length ? two._sign >= 0 : one._sign < 0)
+            else if (one._value.Length > two._value.Length)
             {
-                var nv = (uint[]) one._value.Clone();
+                var nv = (uint[]) (two._sign < 0 ? two : one)._value.Clone();
                 for (var i = two._value.Length - 1; i >= 0; i--)
                     nv[i] |= two._value[i];
                 return new BigInt(nv, one._sign | two._sign);
             }
             else
             {
-                var nv = (uint[]) two._value.Clone();
+                var nv = (uint[]) (one._sign < 0 ? one : two)._value.Clone();
                 for (var i = one._value.Length - 1; i >= 0; i--)
                     nv[i] |= one._value[i];
                 return new BigInt(nv, two._sign | one._sign);
@@ -633,16 +633,16 @@ namespace RT.BigInteger
                 nv[0] &= unchecked((uint) two._sign);
                 return new BigInt(nv, one._sign & (two._sign >> 31));
             }
-            else if (one._value.Length > two._value.Length ? two._sign < 0 : one._sign >= 0)
+            else if (one._value.Length > two._value.Length)
             {
-                var nv = (uint[]) one._value.Clone();
+                var nv = (uint[]) (two._sign < 0 ? one : two)._value.Clone();
                 for (var i = two._value.Length - 1; i >= 0; i--)
                     nv[i] &= two._value[i];
                 return new BigInt(nv, one._sign & two._sign);
             }
             else
             {
-                var nv = (uint[]) two._value.Clone();
+                var nv = (uint[]) (one._sign < 0 ? two : one)._value.Clone();
                 for (var i = one._value.Length - 1; i >= 0; i--)
                     nv[i] &= one._value[i];
                 return new BigInt(nv, two._sign & one._sign);
