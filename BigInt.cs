@@ -259,22 +259,28 @@ namespace RT.BigInteger
             if (operand._value == null)
                 return new BigInt(null, operand._sign >> Math.Min(31, amount));
 
-            // Opportunity to optimize the size of the array
-            var ix = operand._value.Length;
-            var ex = unchecked((uint) operand._sign);
-            while (ix > 0 && operand._value[ix - 1] == ex)
-                ix--;
+            var hb = operand.MostSignificantBit - amount;
+            if (hb < 0)
+                return new BigInt(null, operand._sign);
 
             var amount32 = amount >> 5;
-            if (amount32 >= ix)
-                return new BigInt(null, operand._sign < 0 ? -1 : 0);
             var amountRest = amount & 0x1f;
-            if (amount32 == ix - 1)
-                return new BigInt(null, unchecked((int) ((operand._value[ix - 1] >> amountRest) | unchecked((uint) ((ulong) ex << (32 - amountRest))))));
+            uint[] nv;
 
-            var nv = new uint[ix - amount32];
-            for (var i = 0; i < nv.Length; i++)
-                nv[i] = (operand._value[i + amount32] >> amountRest) | unchecked((uint) ((ulong) (i + amount32 + 1 >= operand._value.Length ? ex : operand._value[i + amount32 + 1]) << (32 - amountRest)));
+            if (amountRest == 0)
+            {
+                nv = new uint[operand._value.Length - amount32];
+                Array.Copy(operand._value, amount32, nv, 0, operand._value.Length - amount32);
+                return new BigInt(nv, operand._sign);
+            }
+
+            var hb32 = hb >> 5;
+            nv = new uint[hb32 + 1];
+            nv[hb32] = (hb32 + amount32 + 1 >= operand._value.Length)
+                ? (operand._value[hb32 + amount32] >> amountRest)
+                : (operand._value[hb32 + amount32] >> amountRest) | (operand._value[hb32 + amount32 + 1] << (32 - amountRest));
+            for (var i = hb32 - 1; i >= 0; i--)
+                nv[i] = (operand._value[i + amount32] >> amountRest) | (operand._value[i + amount32 + 1] << (32 - amountRest));
             return new BigInt(nv, operand._sign);
         }
 
