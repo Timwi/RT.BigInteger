@@ -135,22 +135,22 @@ namespace RT.BigInteger
             }
         }
 
-        /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit signed integer.</summary>
-        public static implicit operator BigInt(int value) => new BigInt(null, value);
-        /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit unsigned integer.</summary>
-        public static implicit operator BigInt(uint value) => new BigInt(value);
         /// <summary>Constructs a <see cref="BigInt"/> from a 64-bit signed integer.</summary>
         public static implicit operator BigInt(long value) => new BigInt(value);
         /// <summary>Constructs a <see cref="BigInt"/> from a 64-bit unsigned integer.</summary>
         public static implicit operator BigInt(ulong value) => new BigInt(value);
+        /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit signed integer.</summary>
+        public static implicit operator BigInt(int value) => new BigInt(null, value);
+        /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit unsigned integer.</summary>
+        public static implicit operator BigInt(uint value) => new BigInt(value);
+        /// <summary>Constructs a <see cref="BigInt"/> from a 16-bit signed integer.</summary>
+        public static implicit operator BigInt(ushort value) => new BigInt(null, value);
+        /// <summary>Constructs a <see cref="BigInt"/> from a 16-bit unsigned integer.</summary>
+        public static implicit operator BigInt(short value) => new BigInt(null, value);
         /// <summary>Constructs a <see cref="BigInt"/> from an 8-bit signed integer.</summary>
         public static implicit operator BigInt(sbyte value) => new BigInt(null, value);
         /// <summary>Constructs a <see cref="BigInt"/> from an 8-bit unsigned integer.</summary>
-        public static implicit operator BigInt(byte value) => new BigInt(value);
-        /// <summary>Constructs a <see cref="BigInt"/> from a 16-bit signed integer.</summary>
-        public static implicit operator BigInt(ushort value) => new BigInt(value);
-        /// <summary>Constructs a <see cref="BigInt"/> from a 16-bit unsigned integer.</summary>
-        public static implicit operator BigInt(short value) => new BigInt(value);
+        public static implicit operator BigInt(byte value) => new BigInt(null, value);
 
         /// <summary>Determines whether the integer is 0.</summary>
         public bool IsZero => _value == null && _sign == 0;
