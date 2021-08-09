@@ -580,7 +580,7 @@ namespace RT.BigInteger
         public override bool Equals(object obj) => obj is BigInt bi && CompareTo(bi) == 0;
 
         /// <summary>Hash code function.</summary>
-        public override int GetHashCode() => _value == null ? _sign : unchecked((int) _value[0]);
+        public override int GetHashCode() => _value == null ? _sign : unchecked((int) _value[0] + MostSignificantBit);
 
         /// <summary>Increment operator.</summary>
         public static BigInt operator ++(BigInt operand) => add(operand, 1, subtract: false);
