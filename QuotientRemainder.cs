@@ -1,6 +1,6 @@
 ﻿namespace RT.BigInteger
 {
-    /// <summary>Encapsulates the two-valued result of a division/modulo operation (<see cref="BigInt.DivideModulo(BigInt)"/>.</summary>
+    /// <summary>Encapsulates the two-valued result of a division/modulo operation (<see cref="BigInt.DivideModulo(BigInt)"/>).</summary>
     public struct QuotientRemainder
     {
         /// <summary>The quotient (result of the integer division).</summary>
