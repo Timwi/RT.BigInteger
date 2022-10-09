@@ -556,21 +556,21 @@ namespace RT.BigInteger
         /// <summary>Compares this integer to <paramref name="other"/>.</summary>
         public int CompareTo(BigInt other)
         {
-            if (_sign != other._sign)
+            if (_value == null)
+                return other._value == null ? _sign.CompareTo(other._sign) : other._sign < 0 ? 1 : -1;
+            else if (other._value == null)
+                return _sign < 0 ? -1 : 1;
+            else if (_sign != other._sign)
                 return _sign < other._sign ? -1 : 1;
-            if (_value == null && other._value == null)
-                return _sign.CompareTo(other._sign);
 
-            for (var i = Math.Max(_value == null ? 0 : _value.Length - 1, other._value == null ? 0 : other._value.Length - 1); i >= 1; i--)
+            for (var i = Math.Max(_value.Length - 1, other._value.Length - 1); i > 0; i--)
             {
-                var v1 = _value == null || i >= _value.Length ? 0u : _value[i];
-                var v2 = other._value == null || i >= other._value.Length ? 0u : other._value[i];
+                var v1 = i >= _value.Length ? 0u : _value[i];
+                var v2 = i >= other._value.Length ? 0u : other._value[i];
                 if (v1 != v2)
                     return v1 < v2 ? -1 : 1;
             }
-            var vv1 = _value == null ? unchecked((uint) _sign) : _value[0];
-            var vv2 = other._value == null ? unchecked((uint) other._sign) : other._value[0];
-            return vv1.CompareTo(vv2);
+            return _value[0].CompareTo(other._value[0]);
         }
 
         /// <summary>Equality comparison.</summary>
