@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text;
 
@@ -719,5 +719,64 @@ namespace RT.BigInteger
 
         /// <summary>Returns the operand.</summary>
         public static BigInt operator +(BigInt operand) => operand;
+
+        /// <summary>Raises the current integer to the power of <paramref name="exponent"/> and returns the result.</summary>
+        public BigInt Pow(BigInt exponent)
+        {
+            if (exponent._sign < 0)
+                throw new InvalidOperationException("BigInt.Pow() cannot be used with a negative exponent.");
+            if (exponent.IsZero)
+                return new BigInt(1);
+
+            var v = this;
+            var result = new BigInt(1);
+
+            var max = exponent.MostSignificantBit + 1;
+            var bit = 0;
+            while (true)
+            {
+                if (exponent.GetBit(bit))
+                    result *= v;
+                bit++;
+                if (bit >= max)
+                    return result;
+                v *= v;
+            }
+        }
+
+        /// <summary>
+        ///     Raises the current integer to the power of <paramref name="exponent"/> and returns the result modulo <paramref
+        ///     name="modulus"/>.</summary>
+        /// <remarks>
+        ///     For large bases and exponents, this method is significantly more efficient than using <see
+        ///     cref="Pow(BigInt)"/> followed by <see cref="Modulo(BigInt)"/>.</remarks>
+        public BigInt ModPow(BigInt exponent, BigInt modulus)
+        {
+            if (exponent._sign < 0)
+                throw new InvalidOperationException("BigInt.ModPow() cannot be used with a negative exponent.");
+            if (modulus._sign < 0)
+                throw new InvalidOperationException("BigInt.ModPow() cannot be used with a negative modulus.");
+            if (modulus.IsZero)
+                throw new DivideByZeroException("BigInt.ModPow() cannot be used with a zero modulus.");
+            if (modulus._sign == 1)
+                return new BigInt(0);
+            if (exponent.IsZero)
+                return new BigInt(1);
+
+            var v = Modulo(modulus);
+            var result = new BigInt(1);
+
+            var max = exponent.MostSignificantBit + 1;
+            var bit = 0;
+            while (true)
+            {
+                if (exponent.GetBit(bit))
+                    result = (result * v) % modulus;
+                bit++;
+                if (bit >= max)
+                    return result;
+                v = (v * v) % modulus;
+            }
+        }
     }
 }
