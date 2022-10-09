@@ -211,6 +211,24 @@ namespace RT.BigInteger
             return pos >= _value.Length ? (_sign < 0) : ((_value[pos] & (1 << (index & 0x1f))) != 0);
         }
 
+        /// <summary>Equivalent to <c>this | (new BigInt(1) &lt;&lt; <paramref name="index"/>)</c>.</summary>
+        public BigInt SetBit(int index)
+        {
+            if (GetBit(index))
+                return this;
+            if (_value == null && index <= 31)
+                return new BigInt(null, _sign | (1 << index));
+            else if (_value != null && index < 32 * _value.Length)
+            {
+                var copy = (uint[]) _value.Clone();
+                copy[index / 32] |= 1U << (index % 32);
+                return new BigInt(copy, _sign);
+            }
+            var arr = new uint[index / 32 + 1];
+            arr[index / 32] = 1U << (index % 32);
+            return this | new BigInt(arr, 0);
+        }
+
         /// <summary>
         ///     Returns the bit-index of the most significant bit in this number. If the number is positive, this is the index
         ///     of the most significant ‘1’ bit. If the number is negative, it is the index of the most significant ‘0’ bit.
@@ -777,6 +795,26 @@ namespace RT.BigInteger
                     return result;
                 v = (v * v) % modulus;
             }
+        }
+
+        /// <summary>Returns the floor (integer portion) of the square root of the current value.</summary>
+        public BigInt Sqrt()
+        {
+            var bit = MostSignificantBit / 2;
+            var result = new BigInt(0);
+
+            while (bit >= 0)
+            {
+                var v = result.SetBit(bit);
+                var sq = v * v;
+                var comp = sq.CompareTo(this);
+                if (comp == 0)
+                    return v;
+                else if (comp < 0)
+                    result = v;
+                bit--;
+            }
+            return result;
         }
     }
 }
