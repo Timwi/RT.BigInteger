@@ -152,6 +152,23 @@ namespace RT.BigInteger
         /// <summary>Constructs a <see cref="BigInt"/> from an 8-bit unsigned integer.</summary>
         public static implicit operator BigInt(byte value) => new BigInt(null, value);
 
+        /// <summary>Returns the bottom 8 bits of a <see cref="BigInt"/> as an 8-bit unsigned integer.</summary>
+        public static explicit operator byte(BigInt value) => value._value == null ? (byte) value._sign : (byte) value._value[0];
+        /// <summary>Returns the bottom 8 bits of a <see cref="BigInt"/> as an 8-bit signed integer.</summary>
+        public static explicit operator sbyte(BigInt value) => value._value == null ? (sbyte) value._sign : (sbyte) value._value[0];
+        /// <summary>Returns the bottom 16 bits of a <see cref="BigInt"/> as a 16-bit unsigned integer.</summary>
+        public static explicit operator ushort(BigInt value) => value._value == null ? (ushort) value._sign : (ushort) value._value[0];
+        /// <summary>Returns the bottom 16 bits of a <see cref="BigInt"/> as a 16-bit signed integer.</summary>
+        public static explicit operator short(BigInt value) => value._value == null ? (short) value._sign : (short) value._value[0];
+        /// <summary>Returns the bottom 32 bits of a <see cref="BigInt"/> as a 32-bit unsigned integer.</summary>
+        public static explicit operator uint(BigInt value) => value._value == null ? (uint) value._sign : value._value[0];
+        /// <summary>Returns the bottom 32 bits of a <see cref="BigInt"/> as a 32-bit signed integer.</summary>
+        public static explicit operator int(BigInt value) => value._value == null ? value._sign : (int) value._value[0];
+        /// <summary>Returns the bottom 64 bits of a <see cref="BigInt"/> as a 64-bit unsigned integer.</summary>
+        public static explicit operator ulong(BigInt value) => value._value == null ? (ulong) value._sign : value._value[0];
+        /// <summary>Returns the bottom 64 bits of a <see cref="BigInt"/> as a 64-bit signed integer.</summary>
+        public static explicit operator long(BigInt value) => value._value == null ? (long) value._sign : value._value[0];
+
         /// <summary>Determines whether the integer is 0.</summary>
         public bool IsZero => _value == null && _sign == 0;
 
