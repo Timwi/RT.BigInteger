@@ -356,7 +356,7 @@ namespace RT.BigInteger
                 return new BigInt(new[] { unchecked((uint) sumI), unchecked((uint) ((ulong) sumL >> 32)) }, unchecked((int) (sumL >> 63)));
             }
 
-            uint subtractor = subtract ? 0xffffffffu : 0u;
+            var subtractor = subtract ? 0xffffffffu : 0u;
             var th = (two._sign < 0) ^ subtract ? 0xffffffffu : 0u;
             var l1 = one._value == null ? 1 : one._value.Length;
             var l2 = two._value == null ? 1 : two._value.Length;
@@ -403,12 +403,7 @@ namespace RT.BigInteger
                 return one;
 
             if (one._value == null && two._value == null)
-            {
-                var prL = (long) one._sign * two._sign;
-                var prI = unchecked((int) prL);
-                if (prI == prL)
-                    return new BigInt(null, prI);
-            }
+                return new BigInt((long) one._sign * two._sign);
 
             var nv = new uint[(one.MostSignificantBit + two.MostSignificantBit + 33) / 32];
             for (var i = 0; i < nv.Length; i++)
@@ -416,12 +411,12 @@ namespace RT.BigInteger
                 var vL = i == 0
                     ? one._value == null ? (uint) one._sign : one._value[0]
                     : (ulong) (one._value == null || i >= one._value.Length ? (uint) (one._sign >> 31) : one._value[i]);
-                var mL = vL * unchecked(two._value == null ? unchecked((uint) two._sign) : two._value[0]) + nv[i];
+                var mL = vL * unchecked(two._value == null ? (uint) two._sign : two._value[0]) + nv[i];
                 nv[i] = unchecked((uint) mL);
                 var carry = unchecked((uint) (mL >> 32));
                 for (var j = i + 1; j < nv.Length; j++)
                 {
-                    mL = vL * unchecked(two._value == null || j - i >= two._value.Length ? unchecked((uint) (two._sign >> 31)) : two._value[j - i]) + carry + nv[j];
+                    mL = vL * unchecked(two._value == null || j - i >= two._value.Length ? (uint) (two._sign >> 31) : two._value[j - i]) + carry + nv[j];
                     nv[j] = unchecked((uint) mL);
                     carry = unchecked((uint) (mL >> 32));
                 }
@@ -494,8 +489,8 @@ namespace RT.BigInteger
                 {
                     var remBy = curShift / 32 + i;
                     var more = remBi > 0 && remBy + 1 < rem.Length;
-                    var valA = (rem[remBy] >> remBi);
-                    var valB = (more ? rem[remBy + 1] << (32 - remBi) : 0u);
+                    var valA = rem[remBy] >> remBi;
+                    var valB = more ? rem[remBy + 1] << (32 - remBi) : 0u;
                     var valC = valA | valB;
                     var val = valC + carry - div[i];
                     if (more)
