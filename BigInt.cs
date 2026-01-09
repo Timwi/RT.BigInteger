@@ -71,7 +71,7 @@ namespace RT.BigInteger
         ///     <c>-</c>) into a <see cref="BigInt"/>.</summary>
         public static BigInt Parse(string str)
         {
-            if (!TryParse(str, out BigInt result))
+            if (!TryParse(str, out var result))
                 throw new ArgumentException("Only digits 0–9, optionally prepended with a '-', are allowed in BigInt.Parse().", nameof(str));
             return result;
         }
@@ -93,9 +93,12 @@ namespace RT.BigInteger
                 value = (value * 1000000000) + intVal;
                 ix += 9;
             }
-            if (str.Length == ix)
-                return true;
-            value = (value * _powersOfTen[str.Length - ix]) + int.Parse(str.Substring(ix));
+            if (str.Length != ix)
+            {
+                if (!int.TryParse(str.Substring(ix), out var intVal))
+                    return false;   // this should never happen
+                value = (value * _powersOfTen[str.Length - ix]) + intVal;
+            }
             if (neg)
                 value = -value;
             return true;
