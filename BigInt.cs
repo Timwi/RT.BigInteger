@@ -790,6 +790,8 @@ namespace RT.BigInteger
         /// <summary>Returns the floor (integer portion) of the square root of the current value.</summary>
         public BigInt Sqrt()
         {
+            if (_sign < 0)
+                throw new ArithmeticException("Attempt to take a square root of a negative value.");
             var bit = MostSignificantBit / 2;
             var resultArr = new uint[bit / 32 + 1];
 
