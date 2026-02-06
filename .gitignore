@@ -1,2 +1,5 @@
 builds/
 .vs/
+TestResults/
+Tests/bin/
+Tests/obj/

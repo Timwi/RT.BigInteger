@@ -103,7 +103,7 @@ namespace RT.BigInteger
                 value = -value;
             return true;
         }
-        private static readonly int[] _powersOfTen = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
+        private static readonly BigInt[] _powersOfTen = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
 
         /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit signed integer.</summary>
         public BigInt(int value) : this(null, value) { }
@@ -290,9 +290,8 @@ namespace RT.BigInteger
 
             var hb32 = hb >> 5;
             nv = new uint[hb32 + 1];
-            nv[hb32] = (hb32 + amount32 + 1 >= operand._value.Length)
-                ? (operand._value[hb32 + amount32] >> amountRest)
-                : (operand._value[hb32 + amount32] >> amountRest) | (operand._value[hb32 + amount32 + 1] << (32 - amountRest));
+            nv[hb32] = (operand._value[hb32 + amount32] >> amountRest) |
+                ((hb32 + amount32 + 1 >= operand._value.Length ? unchecked((uint) (operand._sign >> 31)) : operand._value[hb32 + amount32 + 1]) << (32 - amountRest));
             for (var i = hb32 - 1; i >= 0; i--)
                 nv[i] = (operand._value[i + amount32] >> amountRest) | (operand._value[i + amount32 + 1] << (32 - amountRest));
             return new BigInt(nv, operand._sign);
@@ -313,8 +312,7 @@ namespace RT.BigInteger
             if (operand._value == null && amount <= 32)
                 return new BigInt(((long) operand._sign) << amount);
 
-            var hb = operand.MostSignificantBit + amount;
-            var nv = new uint[(hb >> 5) + 1];
+            var nv = new uint[((operand.MostSignificantBit + amount) >> 5) + 1];
             var amount32 = amount >> 5;
             var amountRest = amount & 0x1f;
             if (amountRest == 0)
@@ -337,11 +335,8 @@ namespace RT.BigInteger
 
             nv[amount32] = operand._value[0] << amountRest;
             var i = 1;
-            for (; i < operand._value.Length; i++)
-                nv[i + amount32] = (operand._value[i] << amountRest) | (operand._value[i - 1] >> (32 - amountRest));
-            var last = (((long) operand._sign << 32) | operand._value[i - 1]) >> (32 - amountRest);
-            if (last != operand._sign >> 31)
-                nv[i + amount32] = unchecked((uint) last);
+            for (; i + amount32 < nv.Length; i++)
+                nv[i + amount32] = ((i >= operand._value.Length ? unchecked((uint) (operand._sign >> 31)) : operand._value[i]) << amountRest) | (operand._value[i - 1] >> (32 - amountRest));
             return new BigInt(nv, operand._sign);
         }
 
@@ -353,38 +348,47 @@ namespace RT.BigInteger
                 var sumI = unchecked((int) sumL);
                 if (sumL == sumI)
                     return new BigInt(null, sumI);
-                return new BigInt(new[] { unchecked((uint) sumI), unchecked((uint) ((ulong) sumL >> 32)) }, unchecked((int) (sumL >> 63)));
+                var secondValue = unchecked((uint) ((ulong) sumL >> 32));
+                return secondValue == 0
+                    ? new BigInt(new[] { unchecked((uint) sumI) }, unchecked((int) (sumL >> 63)))
+                    : new BigInt(new[] { unchecked((uint) sumI), secondValue }, unchecked((int) (sumL >> 63)));
             }
 
             var subtractor = subtract ? 0xffffffffu : 0u;
-            var th = (two._sign < 0) ^ subtract ? 0xffffffffu : 0u;
+            var upper1 = unchecked((uint) (one._sign >> 31));
+            var upper2 = unchecked((uint) (two._sign >> 31));
             var l1 = one._value == null ? 1 : one._value.Length;
             var l2 = two._value == null ? 1 : two._value.Length;
             var len = Math.Max(l1, l2);
 
-            var lastVal1 = one._value == null ? one._sign : unchecked((long) (one._value[one._value.Length - 1] | ((ulong) one._sign << 32)));
-            var lastVal2 = two._value == null ? two._sign : unchecked((long) (two._value[two._value.Length - 1] | ((ulong) two._sign << 32)));
-            var test = subtract ? (lastVal1 - lastVal2 - 1) : (lastVal1 + lastVal2 + 1);
-            if (test != unchecked((int) test))
-                len++;
-
             var nv = new uint[len];
             var sum =
                 (ulong) (one._value == null ? unchecked((uint) one._sign) : one._value[0]) +
-                (ulong) ((two._value == null ? unchecked((uint) two._sign) : two._value[0]) ^ subtractor) +
+                ((two._value == null ? unchecked((uint) two._sign) : two._value[0]) ^ subtractor) +
                 (subtract ? 1ul : 0ul);
             nv[0] = unchecked((uint) sum);
             var carry = unchecked((uint) (sum >> 32));
             for (var i = 1; i < len; i++)
             {
                 sum =
-                    (ulong) (one._value == null ? 0u : i >= one._value.Length ? unchecked((uint) one._sign) : one._value[i]) +
-                    (ulong) (two._value == null ? th : (i >= two._value.Length ? unchecked((uint) two._sign) : two._value[i]) ^ subtractor) +
-                    (ulong) carry;
+                    (ulong) (one._value == null || i >= one._value.Length ? upper1 : one._value[i]) +
+                    ((two._value == null || i >= two._value.Length ? upper2 : two._value[i]) ^ subtractor) +
+                    carry;
                 nv[i] = unchecked((uint) sum);
                 carry = unchecked((uint) (sum >> 32));
             }
-            return new BigInt(nv, (one._sign < 0) ^ (two._sign < 0) ^ subtract ^ (carry != 0) ? -1 : 0);
+            var lastSum = unchecked((int) (upper1 + (upper2 ^ subtractor) + carry));
+            switch (lastSum)
+            {
+                case 0:
+                case -1:
+                    return new BigInt(nv, lastSum);
+                default:
+                    var nv2 = new uint[len + 1];
+                    Array.Copy(nv, nv2, nv.Length);
+                    nv2[len] = unchecked((uint) lastSum);
+                    return new BigInt(nv2, unchecked(lastSum >> 31));
+            }
         }
         /// <summary>Returns the sum of this integer plus <paramref name="other"/>.</summary>
         public BigInt Add(BigInt other) => add(this, other, subtract: false);
@@ -399,13 +403,17 @@ namespace RT.BigInteger
                 return new BigInt(null, 0);
             if (one._value == null && one._sign == 1)
                 return two;
+            if (one._value == null && one._sign == -1)
+                return two.Negative;
             if (two._value == null && two._sign == 1)
                 return one;
+            if (two._value == null && two._sign == -1)
+                return one.Negative;
 
             if (one._value == null && two._value == null)
                 return new BigInt((long) one._sign * two._sign);
 
-            var nv = new uint[(one.MostSignificantBit + two.MostSignificantBit + 33) / 32];
+            var nv = new uint[(one.MostSignificantBit + two.MostSignificantBit + 34) / 32];
             for (var i = 0; i < nv.Length; i++)
             {
                 var vL = i == 0
@@ -433,7 +441,7 @@ namespace RT.BigInteger
             if (two.IsZero)
                 throw new DivideByZeroException();
 
-            if (one._value == null && two._value == null)
+            if (one._value == null && two._value == null && !(one._sign == int.MinValue && two._sign == -1))
                 return new QuotientRemainder(new BigInt(null, one._sign / two._sign), new BigInt(null, one._sign % two._sign));
 
             bool neg1 = false, neg2 = false;
@@ -453,6 +461,7 @@ namespace RT.BigInteger
             var rem = one._value == null ? new[] { unchecked((uint) one._sign) } : neg1 ? one._value : (uint[]) one._value.Clone();
             // Divisor.
             var div = two._value ?? new[] { unchecked((uint) two._sign) };
+            var divLen = two.MostSignificantBit / 32 + 1;
 
             var msb1 = one.MostSignificantBit + 1;
             var msb2 = two.MostSignificantBit + 1;
@@ -463,10 +472,19 @@ namespace RT.BigInteger
             {
                 // Find out whether the part of ‘rem’ that is aligned with ‘div’ is smaller than ‘div’ or not.
                 var remBi = curShift % 32;
-                for (var i = div.Length - 1; i >= 0; i--)
+
+                // ‘rem’ can have a 1-bit just beyond the size of ‘div’
+                // (any bits further beyond that would have already been caught)
+                var testRemIx = curShift / 32 + divLen;
+                if (testRemIx < rem.Length && (rem[testRemIx] & (1 << remBi)) != 0)
+                    goto placeBit;
+
+                for (var i = divLen - 1; i >= 0; i--)
                 {
                     var remBy = curShift / 32 + i;
-                    var v = (rem[remBy] >> remBi) | (remBi == 0 || remBy + 1 >= rem.Length ? 0u : rem[remBy + 1] << (32 - remBi));
+                    var v =
+                        (remBy >= rem.Length ? 0u : rem[remBy] >> remBi) |
+                        (remBi == 0 || remBy + 1 >= rem.Length ? 0u : rem[remBy + 1] << (32 - remBi));
 
                     // If our ‘rem’ part is bigger than ‘div’, we want to place a bit in ‘quo’ and then subtract ‘div’ from ‘rem’.
                     if (v > div[i])
@@ -484,19 +502,17 @@ namespace RT.BigInteger
                     quo = new uint[curShift / 32 + 1];
                 quo[curShift / 32] |= 1u << (curShift % 32);
 
-                var carry = 0L;
-                for (var i = 0; i < div.Length; i++)
+                var carry = 0;
+                var startBy = curShift / 32;
+                var startBi = curShift % 32;
+                for (int i = startBy, j = 0; i < rem.Length; i++, j++)
                 {
-                    var remBy = curShift / 32 + i;
-                    var more = remBi > 0 && remBy + 1 < rem.Length;
-                    var valA = rem[remBy] >> remBi;
-                    var valB = more ? rem[remBy + 1] << (32 - remBi) : 0u;
-                    var valC = valA | valB;
-                    var val = valC + carry - div[i];
-                    if (more)
-                        rem[remBy + 1] = (rem[remBy + 1] >> remBi << remBi) | unchecked((uint) val >> (32 - remBi));
-                    rem[remBy] = unchecked((uint) ((rem[remBy] & ((1u << remBi) - 1)) | (val << remBi)));
-                    carry = val >> 32;
+                    var toSubtract = j >= div.Length ? 0u : div[j] << startBi;
+                    if (startBi != 0 && j > 0 && j - 1 < div.Length)
+                        toSubtract |= div[j - 1] >> (32 - startBi);
+                    var result = unchecked((long) rem[i] - toSubtract + carry);
+                    rem[i] = unchecked((uint) result);
+                    carry = unchecked((int) (result >> 32));
                 }
 
                 nextShift:
@@ -568,8 +584,8 @@ namespace RT.BigInteger
 
             for (var i = Math.Max(_value.Length - 1, other._value.Length - 1); i > 0; i--)
             {
-                var v1 = i >= _value.Length ? 0u : _value[i];
-                var v2 = i >= other._value.Length ? 0u : other._value[i];
+                var v1 = i >= _value.Length ? unchecked((uint) (_sign >> 31)) : _value[i];
+                var v2 = i >= other._value.Length ? unchecked((uint) (other._sign >> 31)) : other._value[i];
                 if (v1 != v2)
                     return v1 < v2 ? -1 : 1;
             }
