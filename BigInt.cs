@@ -76,6 +76,8 @@ namespace RT.BigInteger
             return result;
         }
 
+        private static readonly BigInt[] _powersOfTen = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
+
         /// <summary>
         ///     Parses a numerical string (consisting only of digits <c>0</c> to <c>9</c>, optionally prepended with a
         ///     <c>-</c>) into a <see cref="BigInt"/>.</summary>
@@ -86,24 +88,49 @@ namespace RT.BigInteger
                 return false;
             var neg = str[0] == '-';
             var ix = neg ? 1 : 0;
-            while (str.Length - ix >= 9)
+
+            if (str.Length > 50)
             {
-                if (!int.TryParse(str.Substring(ix, 9), out var intVal))
-                    return false;   // this should never happen
-                value = (value * 1000000000) + intVal;
-                ix += 9;
+                // Recursive divide-and-conquer method that is faster for very large numbers
+                var arr = new int[(str.Length - ix + 8) / 9];
+                for (int i = ix, j = 0; i < str.Length; i += 9, j++)
+                    arr[j] = int.Parse(str.Substring(i, Math.Min(9, str.Length - i)));
+                BigInt conquer(int[] vals, int start, int end, out BigInt powerOfTen)
+                {
+                    if (start == end)
+                    {
+                        powerOfTen = _powersOfTen[Math.Min(9, str.Length - ix - start * 9)];
+                        return new BigInt(null, vals[start]);
+                    }
+                    var mid = (start + end) / 2;
+                    var left = conquer(vals, start, mid, out var leftPower);
+                    var right = conquer(vals, mid + 1, end, out var rightPower);
+                    powerOfTen = leftPower * rightPower;
+                    return left * rightPower + right;
+                }
+                value = conquer(arr, 0, arr.Length - 1, out var _);
             }
-            if (str.Length != ix)
+            else
             {
-                if (!int.TryParse(str.Substring(ix), out var intVal))
-                    return false;   // this should never happen
-                value = (value * _powersOfTen[str.Length - ix]) + intVal;
+                // Iterative method that is faster for numbers of reasonable sizes
+                while (str.Length - ix >= 9)
+                {
+                    if (!int.TryParse(str.Substring(ix, 9), out var intVal))
+                        return false;   // this should never happen
+                    value = (value * 1000000000) + intVal;
+                    ix += 9;
+                }
+                if (str.Length != ix)
+                {
+                    if (!int.TryParse(str.Substring(ix), out var intVal))
+                        return false;   // this should never happen
+                    value = (value * _powersOfTen[str.Length - ix]) + intVal;
+                }
             }
             if (neg)
                 value = -value;
             return true;
         }
-        private static readonly BigInt[] _powersOfTen = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
 
         /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit signed integer.</summary>
         public BigInt(int value) : this(null, value) { }
@@ -556,7 +583,7 @@ namespace RT.BigInteger
                 return "0";
             var sb = new StringBuilder();
             var val = _sign < 0 ? -this : this;
-            while (!val.IsZero)
+            while (true)
             {
                 var qr = val.DivideModulo(1000000000);
                 if (qr.Remainder._value != null)
@@ -564,7 +591,9 @@ namespace RT.BigInteger
                 var str = qr.Remainder._sign.ToString();
                 sb.Insert(0, str);
                 val = qr.Quotient;
-                if (!val.IsZero && str.Length < 9)
+                if (val.IsZero)
+                    break;
+                if (str.Length < 9)
                     sb.Insert(0, new string('0', 9 - str.Length));
             }
             if (_sign < 0)
@@ -773,14 +802,15 @@ namespace RT.BigInteger
         {
             if (exponent._sign < 0)
                 throw new InvalidOperationException("BigInt.ModPow() cannot be used with a negative exponent.");
-            if (modulus._sign < 0)
-                throw new InvalidOperationException("BigInt.ModPow() cannot be used with a negative modulus.");
-            if (modulus.IsZero)
-                throw new DivideByZeroException("BigInt.ModPow() cannot be used with a zero modulus.");
             if (modulus._sign == 1)
                 return new BigInt(0);
+            if (modulus.IsZero)
+                throw new DivideByZeroException("BigInt.ModPow() cannot be used with a zero modulus.");
             if (exponent.IsZero)
                 return new BigInt(1);
+
+            if (modulus._sign < 0)
+                modulus = -modulus;
 
             var v = Modulo(modulus);
             var result = new BigInt(1);
