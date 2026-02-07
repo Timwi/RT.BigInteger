@@ -15,6 +15,9 @@
             bits = "111001000101001010101101011000111111000001001111101100001110000110000110110101001011110001000000111100010110111110000000011010001110110110100111111100110111111111";
             for (var bit = 0; bit < bits.Length; bit++)
                 Assert.AreEqual(bits[bit] == '1', value.GetBit(bit));
+
+            Assert.IsFalse(new BigInt(47).GetBit(100));
+            Assert.IsTrue(new BigInt(-47).GetBit(100));
         }
 
         private void testInvert(BigInt a, BigInt inverted)
