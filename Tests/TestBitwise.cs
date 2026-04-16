@@ -18,6 +18,7 @@
 
             Assert.IsFalse(new BigInt(47).GetBit(100));
             Assert.IsTrue(new BigInt(-47).GetBit(100));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BigInt(47).GetBit(-1));
         }
 
         private void testInvert(BigInt a, BigInt inverted)

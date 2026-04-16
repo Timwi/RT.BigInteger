@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RT.BigInteger.csproj" />
+    <ProjectReference Include="..\Src\RT.BigInteger.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -99,5 +99,30 @@
             testParseToString("340282366920938463463374607431768211409340282366920938463463374607431768211455340282366920938463463374607431768211456340282366920938463463374607431768211457340282366920938463463374607431768211503");
             testParseToString("300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003");
         }
+
+        private void testParseFailures(string str)
+        {
+            Assert.IsFalse(BigInt.TryParse(str, out _));
+            Assert.Throws<ArgumentException>(() => BigInt.Parse(str));
+        }
+
+        [TestMethod]
+        public void TestParseFailures()
+        {
+            testParseFailures(null);
+            testParseFailures("");
+            testParseFailures("-");
+            testParseFailures("!");
+            testParseFailures("A");
+            testParseFailures("-!");
+            testParseFailures("-A");
+            testParseFailures("1!");
+            testParseFailures("1A");
+            testParseFailures("1 2");
+            Assert.IsTrue(BigInt.TryParse("1", out _));
+            Assert.IsTrue(BigInt.TryParse("-1", out _));
+            Assert.IsTrue(BigInt.TryParse("0", out _));
+            Assert.IsTrue(BigInt.TryParse("-0", out _));
+        }
     }
 }

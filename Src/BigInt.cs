@@ -19,7 +19,7 @@ namespace RT.BigInteger
             if (value == null)
                 goto defaultCase;
 
-            if (sign != 0 && sign != -1)
+            if (sign is not 0 and not -1)
                 throw new ArgumentException("sign must be 0 (positive) or -1 (negative).", nameof(sign));
 
             // Check if we can reduce the array to a single value
@@ -76,7 +76,7 @@ namespace RT.BigInteger
             return result;
         }
 
-        private static readonly BigInt[] _powersOfTen = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
+        private static readonly BigInt[] _powersOfTen = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000];
 
         /// <summary>
         ///     Parses a numerical string (consisting only of digits <c>0</c> to <c>9</c>, optionally prepended with a
@@ -84,7 +84,7 @@ namespace RT.BigInteger
         public static bool TryParse(string str, out BigInt value)
         {
             value = new BigInt(0);
-            if (((str[0] < '0' || str[0] > '9') && str[0] != '-') || str.Skip(1).Any(ch => ch < '0' || ch > '9'))
+            if (str == null || str.Length == 0 || str == "-" || (str[0] is (< '0' or > '9') and not '-') || str.Skip(1).Any(ch => ch is < '0' or > '9'))
                 return false;
             var neg = str[0] == '-';
             var ix = neg ? 1 : 0;
@@ -108,23 +108,21 @@ namespace RT.BigInteger
                     powerOfTen = leftPower * rightPower;
                     return left * rightPower + right;
                 }
-                value = conquer(arr, 0, arr.Length - 1, out var _);
+                value = conquer(arr, 0, arr.Length - 1, out _);
             }
             else
             {
                 // Iterative method that is faster for numbers of reasonable sizes
                 while (str.Length - ix >= 9)
                 {
-                    if (!int.TryParse(str.Substring(ix, 9), out var intVal))
-                        return false;   // this should never happen
-                    value = (value * 1000000000) + intVal;
+                    // This should never throw
+                    value = (value * 1000000000) + int.Parse(str.Substring(ix, 9));
                     ix += 9;
                 }
                 if (str.Length != ix)
                 {
-                    if (!int.TryParse(str.Substring(ix), out var intVal))
-                        return false;   // this should never happen
-                    value = (value * _powersOfTen[str.Length - ix]) + intVal;
+                    // This should never throw
+                    value = (value * _powersOfTen[str.Length - ix]) + int.Parse(str.Substring(ix));
                 }
             }
             if (neg)
@@ -145,7 +143,7 @@ namespace RT.BigInteger
             }
             else
             {
-                _value = new uint[] { unchecked((uint) value), (uint) (value >> 32) };
+                _value = [unchecked((uint) value), (uint) (value >> 32)];
                 _sign = 0;
             }
         }
@@ -153,34 +151,34 @@ namespace RT.BigInteger
         /// <summary>Constructs a <see cref="BigInt"/> from a 64-bit signed integer.</summary>
         public BigInt(long value)
         {
-            if (value <= int.MaxValue && value >= int.MinValue)
+            if (value is <= int.MaxValue and >= int.MinValue)
             {
                 _value = null;
                 _sign = (int) value;
             }
             else
             {
-                _value = new uint[] { unchecked((uint) value), unchecked((uint) (value >> 32)) };
+                _value = [unchecked((uint) value), unchecked((uint) (value >> 32))];
                 _sign = unchecked((int) (value >> 63));
             }
         }
 
         /// <summary>Constructs a <see cref="BigInt"/> from a 64-bit signed integer.</summary>
-        public static implicit operator BigInt(long value) => new BigInt(value);
+        public static implicit operator BigInt(long value) => new(value);
         /// <summary>Constructs a <see cref="BigInt"/> from a 64-bit unsigned integer.</summary>
-        public static implicit operator BigInt(ulong value) => new BigInt(value);
+        public static implicit operator BigInt(ulong value) => new(value);
         /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit signed integer.</summary>
-        public static implicit operator BigInt(int value) => new BigInt(null, value);
+        public static implicit operator BigInt(int value) => new(null, value);
         /// <summary>Constructs a <see cref="BigInt"/> from a 32-bit unsigned integer.</summary>
-        public static implicit operator BigInt(uint value) => new BigInt(value);
+        public static implicit operator BigInt(uint value) => new(value);
         /// <summary>Constructs a <see cref="BigInt"/> from a 16-bit signed integer.</summary>
-        public static implicit operator BigInt(ushort value) => new BigInt(null, value);
+        public static implicit operator BigInt(ushort value) => new(null, value);
         /// <summary>Constructs a <see cref="BigInt"/> from a 16-bit unsigned integer.</summary>
-        public static implicit operator BigInt(short value) => new BigInt(null, value);
+        public static implicit operator BigInt(short value) => new(null, value);
         /// <summary>Constructs a <see cref="BigInt"/> from an 8-bit signed integer.</summary>
-        public static implicit operator BigInt(sbyte value) => new BigInt(null, value);
+        public static implicit operator BigInt(sbyte value) => new(null, value);
         /// <summary>Constructs a <see cref="BigInt"/> from an 8-bit unsigned integer.</summary>
-        public static implicit operator BigInt(byte value) => new BigInt(null, value);
+        public static implicit operator BigInt(byte value) => new(null, value);
 
         /// <summary>Returns the bottom 8 bits of a <see cref="BigInt"/> as an 8-bit unsigned integer.</summary>
         public static explicit operator byte(BigInt value) => value._value == null ? (byte) value._sign : (byte) value._value[0];
@@ -200,10 +198,10 @@ namespace RT.BigInteger
         public static explicit operator long(BigInt value) => value._value == null ? (long) value._sign : value._value[0];
 
         /// <summary>Determines whether the integer is 0.</summary>
-        public bool IsZero => _value == null && _sign == 0;
+        public readonly bool IsZero => _value == null && _sign == 0;
 
         /// <summary>Returns the negative value.</summary>
-        public BigInt Negative
+        public readonly BigInt Negative
         {
             get
             {
@@ -223,10 +221,10 @@ namespace RT.BigInteger
         public static BigInt operator -(BigInt op) => op.Negative;
 
         /// <summary>Returns the absolute value.</summary>
-        public BigInt AbsoluteValue => _sign < 0 ? Negative : this;
+        public readonly BigInt AbsoluteValue => _sign < 0 ? Negative : this;
 
         /// <summary>Returns the bitwise inverse (bitwise NOT).</summary>
-        public BigInt Inverse
+        public readonly BigInt Inverse
         {
             get
             {
@@ -242,7 +240,7 @@ namespace RT.BigInteger
         public static BigInt operator ~(BigInt op) => op.Inverse;
 
         /// <summary>Returns whether the bit at <paramref name="index"/> is 1 (regardless of the integer’s sign).</summary>
-        public bool GetBit(int index)
+        public readonly bool GetBit(int index)
         {
             if (index < 0)
                 throw new ArgumentOutOfRangeException(nameof(index), "index cannot be negative.");
@@ -256,7 +254,7 @@ namespace RT.BigInteger
         ///     Returns the bit-index of the most significant bit in this number. If the number is positive, this is the index
         ///     of the most significant ‘1’ bit. If the number is negative, it is the index of the most significant ‘0’ bit.
         ///     If the number is zero, the result is <c>-1</c>.</summary>
-        public int MostSignificantBit
+        public readonly int MostSignificantBit
         {
             get
             {
@@ -283,7 +281,7 @@ namespace RT.BigInteger
         }
 
         /// <summary>Returns the sign of the number: −1 for negative numbers, 0 for zero, and 1 for positive numbers.</summary>
-        public int Sign => _sign < 0 ? -1 : IsZero ? 0 : 1;
+        public readonly int Sign => _sign < 0 ? -1 : IsZero ? 0 : 1;
 
         /// <summary>
         ///     Returns the result of a bit-shift-right by the specified <paramref name="amount"/>. This is equivalent to
@@ -377,8 +375,8 @@ namespace RT.BigInteger
                     return new BigInt(null, sumI);
                 var secondValue = unchecked((uint) ((ulong) sumL >> 32));
                 return secondValue == 0
-                    ? new BigInt(new[] { unchecked((uint) sumI) }, unchecked((int) (sumL >> 63)))
-                    : new BigInt(new[] { unchecked((uint) sumI), secondValue }, unchecked((int) (sumL >> 63)));
+                    ? new BigInt([unchecked((uint) sumI)], unchecked((int) (sumL >> 63)))
+                    : new BigInt([unchecked((uint) sumI), secondValue], unchecked((int) (sumL >> 63)));
             }
 
             var subtractor = subtract ? 0xffffffffu : 0u;
@@ -418,7 +416,7 @@ namespace RT.BigInteger
             }
         }
         /// <summary>Returns the sum of this integer plus <paramref name="other"/>.</summary>
-        public BigInt Add(BigInt other) => add(this, other, subtract: false);
+        public readonly BigInt Add(BigInt other) => add(this, other, subtract: false);
         /// <summary>Returns the sum of <paramref name="one"/> plus <paramref name="two"/>.</summary>
         public static BigInt operator +(BigInt one, BigInt two) => add(one, two, subtract: false);
         /// <summary>Returns the difference of <paramref name="one"/> minus <paramref name="two"/>.</summary>
@@ -459,7 +457,7 @@ namespace RT.BigInteger
             return new BigInt(nv, (one._sign >> 31) ^ (two._sign >> 31));
         }
         /// <summary>Returns the product of this integer times <paramref name="other"/>.</summary>
-        public BigInt Multiply(BigInt other) => multiply(this, other);
+        public readonly BigInt Multiply(BigInt other) => multiply(this, other);
         /// <summary>Returns the product of <paramref name="one"/> times <paramref name="two"/>.</summary>
         public static BigInt operator *(BigInt one, BigInt two) => multiply(one, two);
 
@@ -485,9 +483,9 @@ namespace RT.BigInteger
 
             // This array starts out with the value of ‘one’ (the dividend). We will successively subtract left-shifted ‘two’s
             // from it until it is smaller than ‘two’, at which point it will contain the remainder.
-            var rem = one._value == null ? new[] { unchecked((uint) one._sign) } : neg1 ? one._value : (uint[]) one._value.Clone();
+            var rem = one._value == null ? [unchecked((uint) one._sign)] : neg1 ? one._value : (uint[]) one._value.Clone();
             // Divisor.
-            var div = two._value ?? new[] { unchecked((uint) two._sign) };
+            var div = two._value ?? [unchecked((uint) two._sign)];
             var divLen = two.MostSignificantBit / 32 + 1;
 
             var msb1 = one.MostSignificantBit + 1;
@@ -525,8 +523,7 @@ namespace RT.BigInteger
                 // If we get here, the ‘rem’ part is equal to ‘div’, so we still want to place a bit and subtract
 
                 placeBit:
-                if (quo == null)
-                    quo = new uint[curShift / 32 + 1];
+                quo ??= new uint[curShift / 32 + 1];
                 quo[curShift / 32] |= 1u << (curShift % 32);
 
                 var carry = 0;
@@ -553,13 +550,13 @@ namespace RT.BigInteger
             return new QuotientRemainder(finalQ, finalR);
         }
         /// <summary>Calculates a quotient and remainder by dividing this integer by <paramref name="other"/>.</summary>
-        public QuotientRemainder DivideModulo(BigInt other) => divideModulo(this, other);
+        public readonly QuotientRemainder DivideModulo(BigInt other) => divideModulo(this, other);
         /// <summary>Returns the quotient obtained by dividing this integer by <paramref name="other"/>.</summary>
-        public BigInt Divide(BigInt other) => divideModulo(this, other).Quotient;
+        public readonly BigInt Divide(BigInt other) => divideModulo(this, other).Quotient;
         /// <summary>Returns the quotient obtained by dividing <paramref name="one"/> by <paramref name="two"/>.</summary>
         public static BigInt operator /(BigInt one, BigInt two) => divideModulo(one, two).Quotient;
         /// <summary>Returns the remainder obtained when dividing this integer by <paramref name="other"/>.</summary>
-        public BigInt Modulo(BigInt other) => divideModulo(this, other).Remainder;
+        public readonly BigInt Modulo(BigInt other) => divideModulo(this, other).Remainder;
         /// <summary>Returns the remainder obtained when dividing <paramref name="one"/> by <paramref name="two"/>.</summary>
         public static BigInt operator %(BigInt one, BigInt two) => divideModulo(one, two).Remainder;
 
@@ -577,7 +574,7 @@ namespace RT.BigInteger
         public static bool operator !=(BigInt one, BigInt two) => one.CompareTo(two) != 0;
 
         /// <summary>Override; see base.</summary>
-        public override string ToString()
+        public override readonly string ToString()
         {
             if (IsZero)
                 return "0";
@@ -628,7 +625,7 @@ namespace RT.BigInteger
         public override bool Equals(object obj) => obj is BigInt bi && CompareTo(bi) == 0;
 
         /// <summary>Hash code function.</summary>
-        public override int GetHashCode() => _value == null ? _sign : unchecked((int) _value[0] + MostSignificantBit);
+        public override readonly int GetHashCode() => _value == null ? _sign : unchecked((int) _value[0] + MostSignificantBit);
 
         /// <summary>Increment operator.</summary>
         public static BigInt operator ++(BigInt operand) => add(operand, 1, subtract: false);
@@ -749,8 +746,7 @@ namespace RT.BigInteger
                   ^ (two._value == null || i >= two._value.Length ? unchecked((uint) (two._sign >> 31)) : two._value[i]);
                 if (v != sign)
                 {
-                    if (nv == null)
-                        nv = new uint[i + 1];
+                    nv ??= new uint[i + 1];
                     nv[i] = v;
                 }
             }
@@ -769,7 +765,7 @@ namespace RT.BigInteger
         public static BigInt operator +(BigInt operand) => operand;
 
         /// <summary>Raises the current integer to the power of <paramref name="exponent"/> and returns the result.</summary>
-        public BigInt Pow(BigInt exponent)
+        public readonly BigInt Pow(BigInt exponent)
         {
             if (exponent._sign < 0)
                 throw new InvalidOperationException("BigInt.Pow() cannot be used with a negative exponent.");
@@ -798,7 +794,7 @@ namespace RT.BigInteger
         /// <remarks>
         ///     For large bases and exponents, this method is significantly more efficient than using <see
         ///     cref="Pow(BigInt)"/> followed by <see cref="Modulo(BigInt)"/>.</remarks>
-        public BigInt ModPow(BigInt exponent, BigInt modulus)
+        public readonly BigInt ModPow(BigInt exponent, BigInt modulus)
         {
             if (exponent._sign < 0)
                 throw new InvalidOperationException("BigInt.ModPow() cannot be used with a negative exponent.");
@@ -829,7 +825,7 @@ namespace RT.BigInteger
         }
 
         /// <summary>Returns the floor (integer portion) of the square root of the current value.</summary>
-        public BigInt Sqrt()
+        public readonly BigInt Sqrt()
         {
             if (_sign < 0)
                 throw new ArithmeticException("Attempt to take a square root of a negative value.");

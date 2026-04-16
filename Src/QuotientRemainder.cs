@@ -1,22 +1,16 @@
 ﻿namespace RT.BigInteger
 {
     /// <summary>Encapsulates the two-valued result of a division/modulo operation (<see cref="BigInt.DivideModulo(BigInt)"/>).</summary>
-    public struct QuotientRemainder
+    /// <remarks>Constructor.</remarks>
+    public struct QuotientRemainder(BigInt quotient, BigInt remainder)
     {
         /// <summary>The quotient (result of the integer division).</summary>
-        public BigInt Quotient { get; private set; }
+        public BigInt Quotient { get; private set; } = quotient;
         /// <summary>The remainder (result of the modulo).</summary>
-        public BigInt Remainder { get; private set; }
-
-        /// <summary>Constructor.</summary>
-        public QuotientRemainder(BigInt quotient, BigInt remainder)
-        {
-            Quotient = quotient;
-            Remainder = remainder;
-        }
+        public BigInt Remainder { get; private set; } = remainder;
 
         /// <summary>Deconstructor.</summary>
-        public void Deconstruct(out BigInt quotient, out BigInt remainder)
+        public readonly void Deconstruct(out BigInt quotient, out BigInt remainder)
         {
             quotient = Quotient;
             remainder = Remainder;

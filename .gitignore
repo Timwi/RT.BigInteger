@@ -1,5 +1,4 @@
-builds/
-.vs/
-TestResults/
-Tests/bin/
-Tests/obj/
+bin
+obj
+.vs
+TestResults

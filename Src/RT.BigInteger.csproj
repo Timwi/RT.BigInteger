@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <Authors>Timwi</Authors>
+    <Description>A netstandard 2.0 implementation of BigIntegers.</Description>
+    <PackageTags>C#;integer;bigint;biginteger</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>
