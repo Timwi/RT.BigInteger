@@ -181,21 +181,33 @@ namespace RT.BigInteger
         public static implicit operator BigInt(byte value) => new(null, value);
 
         /// <summary>Returns the bottom 8 bits of a <see cref="BigInt"/> as an 8-bit unsigned integer.</summary>
-        public static explicit operator byte(BigInt value) => value._value == null ? (byte) value._sign : (byte) value._value[0];
+        public static explicit operator byte(BigInt value) => unchecked(value._value == null ? (byte) value._sign : (byte) value._value[0]);
         /// <summary>Returns the bottom 8 bits of a <see cref="BigInt"/> as an 8-bit signed integer.</summary>
-        public static explicit operator sbyte(BigInt value) => value._value == null ? (sbyte) value._sign : (sbyte) value._value[0];
+        public static explicit operator sbyte(BigInt value) => unchecked(value._value == null ? (sbyte) value._sign : (sbyte) value._value[0]);
         /// <summary>Returns the bottom 16 bits of a <see cref="BigInt"/> as a 16-bit unsigned integer.</summary>
-        public static explicit operator ushort(BigInt value) => value._value == null ? (ushort) value._sign : (ushort) value._value[0];
+        public static explicit operator ushort(BigInt value) => unchecked(value._value == null ? (ushort) value._sign : (ushort) value._value[0]);
         /// <summary>Returns the bottom 16 bits of a <see cref="BigInt"/> as a 16-bit signed integer.</summary>
-        public static explicit operator short(BigInt value) => value._value == null ? (short) value._sign : (short) value._value[0];
+        public static explicit operator short(BigInt value) => unchecked(value._value == null ? (short) value._sign : (short) value._value[0]);
         /// <summary>Returns the bottom 32 bits of a <see cref="BigInt"/> as a 32-bit unsigned integer.</summary>
-        public static explicit operator uint(BigInt value) => value._value == null ? (uint) value._sign : value._value[0];
+        public static explicit operator uint(BigInt value) => unchecked(value._value == null ? (uint) value._sign : value._value[0]);
         /// <summary>Returns the bottom 32 bits of a <see cref="BigInt"/> as a 32-bit signed integer.</summary>
-        public static explicit operator int(BigInt value) => value._value == null ? value._sign : (int) value._value[0];
+        public static explicit operator int(BigInt value) => unchecked(value._value == null ? value._sign : (int) value._value[0]);
         /// <summary>Returns the bottom 64 bits of a <see cref="BigInt"/> as a 64-bit unsigned integer.</summary>
-        public static explicit operator ulong(BigInt value) => value._value == null ? (ulong) value._sign : value._value[0];
+        public static explicit operator ulong(BigInt value) => value switch
+        {
+            { _value: null } => unchecked((ulong) value._sign),
+            { _value.Length: 1, _sign: < 0 } => 0xffffffff00000000UL | value._value[0],
+            { _value.Length: 1 } => value._value[0],
+            _ => unchecked(((ulong) value._value[1] << 32) | value._value[0]),
+        };
         /// <summary>Returns the bottom 64 bits of a <see cref="BigInt"/> as a 64-bit signed integer.</summary>
-        public static explicit operator long(BigInt value) => value._value == null ? (long) value._sign : value._value[0];
+        public static explicit operator long(BigInt value) => value switch
+        {
+            { _value: null } => value._sign,
+            { _value.Length: 1, _sign: < 0 } => (long) (0xffffffff00000000UL | value._value[0]),
+            { _value.Length: 1 } => value._value[0],
+            _ => unchecked((long) ((ulong) value._value[1] << 32) | value._value[0]),
+        };
 
         /// <summary>Determines whether the integer is 0.</summary>
         public readonly bool IsZero => _value == null && _sign == 0;
@@ -506,10 +518,9 @@ namespace RT.BigInteger
 
                 for (var i = divLen - 1; i >= 0; i--)
                 {
+                    // The highest value this can assume is one.MostSignificantBit/32 and is therefore never less than rem.Length
                     var remBy = curShift / 32 + i;
-                    var v =
-                        (remBy >= rem.Length ? 0u : rem[remBy] >> remBi) |
-                        (remBi == 0 || remBy + 1 >= rem.Length ? 0u : rem[remBy + 1] << (32 - remBi));
+                    var v = (rem[remBy] >> remBi) | (remBi == 0 || remBy + 1 >= rem.Length ? 0u : rem[remBy + 1] << (32 - remBi));
 
                     // If our ‘rem’ part is bigger than ‘div’, we want to place a bit in ‘quo’ and then subtract ‘div’ from ‘rem’.
                     if (v > div[i])
@@ -583,8 +594,7 @@ namespace RT.BigInteger
             while (true)
             {
                 var qr = val.DivideModulo(1000000000);
-                if (qr.Remainder._value != null)
-                    throw new InvalidOperationException("An internal error occurred in BigInt.ToString().");
+                // Since 1000000000 fits in an int, we can safely assume that qr.Remainder._value == null and the remainder is in qr.Remainder._sign
                 var str = qr.Remainder._sign.ToString();
                 sb.Insert(0, str);
                 val = qr.Quotient;

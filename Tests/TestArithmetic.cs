@@ -32845,5 +32845,93 @@
 
             Assert.Throws<InvalidOperationException>(() => new BigInt(1).ModPow(-1, 1));
         }
+
+        private void testIncrementDecrement(BigInt a, BigInt aPlusOne, BigInt aMinusOne)
+        {
+            var b = a;
+            a++;
+            Assert.AreEqual(aPlusOne, a);
+            b--;
+            Assert.AreEqual(aMinusOne, b);
+        }
+
+        [TestMethod]
+        public void TestIncrementDecrement()
+        {
+            testIncrementDecrement(BigInt.Parse("-340282366920938463463374607431768211503"), BigInt.Parse("-340282366920938463463374607431768211502"), BigInt.Parse("-340282366920938463463374607431768211504"));
+            testIncrementDecrement(BigInt.Parse("-340282366920938463463374607431768211457"), BigInt.Parse("-340282366920938463463374607431768211456"), BigInt.Parse("-340282366920938463463374607431768211458"));
+            testIncrementDecrement(BigInt.Parse("-340282366920938463463374607431768211456"), BigInt.Parse("-340282366920938463463374607431768211455"), BigInt.Parse("-340282366920938463463374607431768211457"));
+            testIncrementDecrement(BigInt.Parse("-340282366920938463463374607431768211455"), BigInt.Parse("-340282366920938463463374607431768211454"), BigInt.Parse("-340282366920938463463374607431768211456"));
+            testIncrementDecrement(BigInt.Parse("-340282366920938463463374607431768211409"), BigInt.Parse("-340282366920938463463374607431768211408"), BigInt.Parse("-340282366920938463463374607431768211410"));
+            testIncrementDecrement(BigInt.Parse("-170141183460469231731687303715884105775"), BigInt.Parse("-170141183460469231731687303715884105774"), BigInt.Parse("-170141183460469231731687303715884105776"));
+            testIncrementDecrement(BigInt.Parse("-170141183460469231731687303715884105729"), BigInt.Parse("-170141183460469231731687303715884105728"), BigInt.Parse("-170141183460469231731687303715884105730"));
+            testIncrementDecrement(BigInt.Parse("-170141183460469231731687303715884105728"), BigInt.Parse("-170141183460469231731687303715884105727"), BigInt.Parse("-170141183460469231731687303715884105729"));
+            testIncrementDecrement(BigInt.Parse("-170141183460469231731687303715884105727"), BigInt.Parse("-170141183460469231731687303715884105726"), BigInt.Parse("-170141183460469231731687303715884105728"));
+            testIncrementDecrement(BigInt.Parse("-170141183460469231731687303715884105681"), BigInt.Parse("-170141183460469231731687303715884105680"), BigInt.Parse("-170141183460469231731687303715884105682"));
+            testIncrementDecrement(BigInt.Parse("-18446744073709551663"), BigInt.Parse("-18446744073709551662"), BigInt.Parse("-18446744073709551664"));
+            testIncrementDecrement(BigInt.Parse("-18446744073709551617"), BigInt.Parse("-18446744073709551616"), BigInt.Parse("-18446744073709551618"));
+            testIncrementDecrement(BigInt.Parse("-18446744073709551616"), BigInt.Parse("-18446744073709551615"), BigInt.Parse("-18446744073709551617"));
+            testIncrementDecrement(BigInt.Parse("-18446744073709551615"), BigInt.Parse("-18446744073709551614"), BigInt.Parse("-18446744073709551616"));
+            testIncrementDecrement(BigInt.Parse("-18446744073709551569"), BigInt.Parse("-18446744073709551568"), BigInt.Parse("-18446744073709551570"));
+            testIncrementDecrement(BigInt.Parse("-9223372036854775855"), BigInt.Parse("-9223372036854775854"), BigInt.Parse("-9223372036854775856"));
+            testIncrementDecrement(BigInt.Parse("-9223372036854775809"), BigInt.Parse("-9223372036854775808"), BigInt.Parse("-9223372036854775810"));
+            testIncrementDecrement(BigInt.Parse("-9223372036854775808"), BigInt.Parse("-9223372036854775807"), BigInt.Parse("-9223372036854775809"));
+            testIncrementDecrement(BigInt.Parse("-9223372036854775807"), BigInt.Parse("-9223372036854775806"), BigInt.Parse("-9223372036854775808"));
+            testIncrementDecrement(BigInt.Parse("-9223372036854775761"), BigInt.Parse("-9223372036854775760"), BigInt.Parse("-9223372036854775762"));
+            testIncrementDecrement(BigInt.Parse("-4294967343"), BigInt.Parse("-4294967342"), BigInt.Parse("-4294967344"));
+            testIncrementDecrement(BigInt.Parse("-4294967297"), BigInt.Parse("-4294967296"), BigInt.Parse("-4294967298"));
+            testIncrementDecrement(BigInt.Parse("-4294967296"), BigInt.Parse("-4294967295"), BigInt.Parse("-4294967297"));
+            testIncrementDecrement(BigInt.Parse("-4294967295"), BigInt.Parse("-4294967294"), BigInt.Parse("-4294967296"));
+            testIncrementDecrement(BigInt.Parse("-4294967249"), BigInt.Parse("-4294967248"), BigInt.Parse("-4294967250"));
+            testIncrementDecrement(BigInt.Parse("-2147483695"), BigInt.Parse("-2147483694"), BigInt.Parse("-2147483696"));
+            testIncrementDecrement(BigInt.Parse("-2147483649"), BigInt.Parse("-2147483648"), BigInt.Parse("-2147483650"));
+            testIncrementDecrement(BigInt.Parse("-2147483648"), BigInt.Parse("-2147483647"), BigInt.Parse("-2147483649"));
+            testIncrementDecrement(BigInt.Parse("-2147483647"), BigInt.Parse("-2147483646"), BigInt.Parse("-2147483648"));
+            testIncrementDecrement(BigInt.Parse("-2147483601"), BigInt.Parse("-2147483600"), BigInt.Parse("-2147483602"));
+            testIncrementDecrement(BigInt.Parse("-65583"), BigInt.Parse("-65582"), BigInt.Parse("-65584"));
+            testIncrementDecrement(BigInt.Parse("-65537"), BigInt.Parse("-65536"), BigInt.Parse("-65538"));
+            testIncrementDecrement(BigInt.Parse("-65536"), BigInt.Parse("-65535"), BigInt.Parse("-65537"));
+            testIncrementDecrement(BigInt.Parse("-65535"), BigInt.Parse("-65534"), BigInt.Parse("-65536"));
+            testIncrementDecrement(BigInt.Parse("-65489"), BigInt.Parse("-65488"), BigInt.Parse("-65490"));
+            testIncrementDecrement(BigInt.Parse("-47"), BigInt.Parse("-46"), BigInt.Parse("-48"));
+            testIncrementDecrement(BigInt.Parse("-1"), BigInt.Parse("0"), BigInt.Parse("-2"));
+            testIncrementDecrement(BigInt.Parse("0"), BigInt.Parse("1"), BigInt.Parse("-1"));
+            testIncrementDecrement(BigInt.Parse("1"), BigInt.Parse("2"), BigInt.Parse("0"));
+            testIncrementDecrement(BigInt.Parse("47"), BigInt.Parse("48"), BigInt.Parse("46"));
+            testIncrementDecrement(BigInt.Parse("65489"), BigInt.Parse("65490"), BigInt.Parse("65488"));
+            testIncrementDecrement(BigInt.Parse("65535"), BigInt.Parse("65536"), BigInt.Parse("65534"));
+            testIncrementDecrement(BigInt.Parse("65536"), BigInt.Parse("65537"), BigInt.Parse("65535"));
+            testIncrementDecrement(BigInt.Parse("65537"), BigInt.Parse("65538"), BigInt.Parse("65536"));
+            testIncrementDecrement(BigInt.Parse("65583"), BigInt.Parse("65584"), BigInt.Parse("65582"));
+            testIncrementDecrement(BigInt.Parse("2147483601"), BigInt.Parse("2147483602"), BigInt.Parse("2147483600"));
+            testIncrementDecrement(BigInt.Parse("2147483647"), BigInt.Parse("2147483648"), BigInt.Parse("2147483646"));
+            testIncrementDecrement(BigInt.Parse("2147483648"), BigInt.Parse("2147483649"), BigInt.Parse("2147483647"));
+            testIncrementDecrement(BigInt.Parse("2147483649"), BigInt.Parse("2147483650"), BigInt.Parse("2147483648"));
+            testIncrementDecrement(BigInt.Parse("2147483695"), BigInt.Parse("2147483696"), BigInt.Parse("2147483694"));
+            testIncrementDecrement(BigInt.Parse("4294967249"), BigInt.Parse("4294967250"), BigInt.Parse("4294967248"));
+            testIncrementDecrement(BigInt.Parse("4294967295"), BigInt.Parse("4294967296"), BigInt.Parse("4294967294"));
+            testIncrementDecrement(BigInt.Parse("4294967296"), BigInt.Parse("4294967297"), BigInt.Parse("4294967295"));
+            testIncrementDecrement(BigInt.Parse("4294967297"), BigInt.Parse("4294967298"), BigInt.Parse("4294967296"));
+            testIncrementDecrement(BigInt.Parse("4294967343"), BigInt.Parse("4294967344"), BigInt.Parse("4294967342"));
+            testIncrementDecrement(BigInt.Parse("9223372036854775761"), BigInt.Parse("9223372036854775762"), BigInt.Parse("9223372036854775760"));
+            testIncrementDecrement(BigInt.Parse("9223372036854775807"), BigInt.Parse("9223372036854775808"), BigInt.Parse("9223372036854775806"));
+            testIncrementDecrement(BigInt.Parse("9223372036854775808"), BigInt.Parse("9223372036854775809"), BigInt.Parse("9223372036854775807"));
+            testIncrementDecrement(BigInt.Parse("9223372036854775809"), BigInt.Parse("9223372036854775810"), BigInt.Parse("9223372036854775808"));
+            testIncrementDecrement(BigInt.Parse("9223372036854775855"), BigInt.Parse("9223372036854775856"), BigInt.Parse("9223372036854775854"));
+            testIncrementDecrement(BigInt.Parse("18446744073709551569"), BigInt.Parse("18446744073709551570"), BigInt.Parse("18446744073709551568"));
+            testIncrementDecrement(BigInt.Parse("18446744073709551615"), BigInt.Parse("18446744073709551616"), BigInt.Parse("18446744073709551614"));
+            testIncrementDecrement(BigInt.Parse("18446744073709551616"), BigInt.Parse("18446744073709551617"), BigInt.Parse("18446744073709551615"));
+            testIncrementDecrement(BigInt.Parse("18446744073709551617"), BigInt.Parse("18446744073709551618"), BigInt.Parse("18446744073709551616"));
+            testIncrementDecrement(BigInt.Parse("18446744073709551663"), BigInt.Parse("18446744073709551664"), BigInt.Parse("18446744073709551662"));
+            testIncrementDecrement(BigInt.Parse("170141183460469231731687303715884105681"), BigInt.Parse("170141183460469231731687303715884105682"), BigInt.Parse("170141183460469231731687303715884105680"));
+            testIncrementDecrement(BigInt.Parse("170141183460469231731687303715884105727"), BigInt.Parse("170141183460469231731687303715884105728"), BigInt.Parse("170141183460469231731687303715884105726"));
+            testIncrementDecrement(BigInt.Parse("170141183460469231731687303715884105728"), BigInt.Parse("170141183460469231731687303715884105729"), BigInt.Parse("170141183460469231731687303715884105727"));
+            testIncrementDecrement(BigInt.Parse("170141183460469231731687303715884105729"), BigInt.Parse("170141183460469231731687303715884105730"), BigInt.Parse("170141183460469231731687303715884105728"));
+            testIncrementDecrement(BigInt.Parse("170141183460469231731687303715884105775"), BigInt.Parse("170141183460469231731687303715884105776"), BigInt.Parse("170141183460469231731687303715884105774"));
+            testIncrementDecrement(BigInt.Parse("340282366920938463463374607431768211409"), BigInt.Parse("340282366920938463463374607431768211410"), BigInt.Parse("340282366920938463463374607431768211408"));
+            testIncrementDecrement(BigInt.Parse("340282366920938463463374607431768211455"), BigInt.Parse("340282366920938463463374607431768211456"), BigInt.Parse("340282366920938463463374607431768211454"));
+            testIncrementDecrement(BigInt.Parse("340282366920938463463374607431768211456"), BigInt.Parse("340282366920938463463374607431768211457"), BigInt.Parse("340282366920938463463374607431768211455"));
+            testIncrementDecrement(BigInt.Parse("340282366920938463463374607431768211457"), BigInt.Parse("340282366920938463463374607431768211458"), BigInt.Parse("340282366920938463463374607431768211456"));
+        }
     }
 }
