@@ -1,7 +1,7 @@
 ﻿namespace RT.BigInteger.Tests
 {
     [TestClass]
-    public sealed class TestArithmetic
+    public sealed class TestBasicArithmetic
     {
         private void testAddition(BigInt a, BigInt b, BigInt result)
         {

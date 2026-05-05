@@ -212,6 +212,36 @@ namespace RT.BigInteger
         /// <summary>Determines whether the integer is 0.</summary>
         public readonly bool IsZero => _value == null && _sign == 0;
 
+        /// <summary>Determines whether the integer is even.</summary>
+        public readonly bool IsEven => _value == null ? (_sign & 1) == 0 : (_value[0] & 1) == 0;
+
+        /// <summary>Determines whether the integer is odd.</summary>
+        public readonly bool IsOdd => _value == null ? (_sign & 1) != 0 : (_value[0] & 1) != 0;
+
+        /// <summary>Determines whether the integer is a power of two.</summary>
+        public readonly bool IsPowerOfTwo
+        {
+            get
+            {
+                if (_sign < 0)
+                    return false;
+                if (_value == null)
+                    return _sign != 0 && (_sign & (_sign - 1)) == 0;
+
+                var found = false;
+                for (var i = 0; i < _value.Length; i++)
+                {
+                    var v = _value[i];
+                    if (v == 0)
+                        continue;
+                    if (found || (v & (v - 1)) != 0)
+                        return false;
+                    found = true;
+                }
+                return found;
+            }
+        }
+
         /// <summary>Returns the negative value.</summary>
         public readonly BigInt Negative
         {
@@ -280,13 +310,14 @@ namespace RT.BigInteger
                 else
                 {
                     ix = _value.Length - 1;
-                    while (ix > 0 && _value[ix] == _sign)
+                    while (ix > 0 && _value[ix] == (uint) _sign)
                         ix--;
                     examine = _value[ix];
                 }
-                var signBit = _sign < 0;
+                if (_sign < 0)
+                    examine = ~examine;
                 var bitIx = 31;
-                while (bitIx >= 0 && (((examine & (1u << bitIx)) != 0) == signBit))
+                while (bitIx >= 0 && (examine & (1u << bitIx)) == 0)
                     bitIx--;
                 return bitIx + 32 * ix;
             }
